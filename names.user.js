@@ -8,6 +8,8 @@
 // @description 5/8/2021, 10:01:06 AM
 // ==/UserScript==
 
+const createdElements = [];
+
 function nameFromLink(url) {
   // split up url
   const parts = url.split("/");
@@ -24,7 +26,15 @@ function nameFromLink(url) {
   return `${brand} - ${name}`;
 }
 
-function go() {
+function toggleLabels(letters) {
+  if (createdElements.length > 0) {
+    while (createdElements.length > 0) {
+      el = createdElements.pop();
+      el.remove();
+    }
+    return;
+  }
+
   const perfumesOnShelf = document.getElementsByClassName("perfume-on-shelf");
 
   for (const perfumeOnShelf of perfumesOnShelf) {
@@ -32,6 +42,9 @@ function go() {
 
     // the 'favorite' perfumes don't have perfume name in alt. let's just grab from the url
     const perfumeName = nameFromLink(parentLink.getAttribute("href"));
+    const letter = perfumeName[0];
+
+    const label = letters ? letter : perfumeName;
 
     // add margin to parentDiv
     const parentDiv = parentLink.parentNode;
@@ -41,40 +54,57 @@ function go() {
     const newDiv = document.createElement("div");
 
     // make font smaller
-    newDiv.style.fontSize = "0.75rem";
-    newDiv.style.margin = "10px 0";
+    newDiv.style.fontSize = "0.6rem";
+    newDiv.style.margin = "5px 0";
 
     // and give it some content
-    const newContent = document.createTextNode(perfumeName);
+    const newContent = document.createTextNode(label);
 
     // add the text node to the newly created div
     newDiv.appendChild(newContent);
 
     // add the div to the parentLink
     parentLink.appendChild(newDiv);
+
+    createdElements.push(newDiv);
   }
 }
 
-// https://stackoverflow.com/questions/12897446/userscript-to-wait-for-page-to-load-before-executing-code-techniques
+function createButtons() {
+  const buttonsDiv = document.createElement("div");
 
-// waits for the page to stop changing for x seconds before executing (waiting for janky ajax calls on Fragrantica to finish).
-// Here's how:
-// start a timer for INTERVAL milliseconds. when the timer is completed execute the code. if a change on the page is detected,
-// cancel the timer and reset it.
+  buttonsDiv.style.position = "fixed";
+  buttonsDiv.style.bottom = "5px";
+  buttonsDiv.style.right = "5px";
+  buttonsDiv.style.display = "flex";
+  buttonsDiv.style.flexDirection = "column";
 
-const INTERVAL = 3000;
-const observer = new MutationObserver(resetTimer);
-let timer = setTimeout(action, INTERVAL, observer);
+  let letterButton = document.createElement("button");
+  letterButton.style.cursor = "pointer";
+  letterButton.innerText = "Toggle Letters";
+  letterButton.onclick = () => toggleLabels(true);
+  letterButton.style.width = "200ppx";
+  letterButton.style.height = "50pxx";
+  letterButton.style.padding = "10px";
+  letterButton.style.marginBottom = "5px";
+  letterButton.style.backgroundColor = "papayawhip";
+  letterButton.style.border = "1px solid black";
+  letterButton.style.backgroundColor = "papayawhip";
 
-observer.observe(document, { childList: true, subtree: true });
+  let toggleNames = document.createElement("button");
+  toggleNames.style.cursor = "pointer";
+  toggleNames.innerText = "Toggle Labels";
+  toggleNames.onclick = () => toggleLabels(false);
+  toggleNames.style.width = "200ppx";
+  toggleNames.style.height = "50pxx";
+  toggleNames.style.padding = "10px";
+  toggleNames.style.border = "1px solid black";
+  toggleNames.style.backgroundColor = "papayawhip";
 
-function resetTimer(changes, observer) {
-  clearTimeout(timer);
-  timer = setTimeout(action, INTERVAL, observer);
+  buttonsDiv.append(letterButton);
+  buttonsDiv.append(toggleNames);
+
+  document.body.appendChild(buttonsDiv);
 }
 
-function action(o) {
-  o.disconnect();
-
-  go();
-}
+createButtons();
